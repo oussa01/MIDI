@@ -1,0 +1,16 @@
+{
+  "library": "spring-mvc",
+  "dateLibrary": "java8",
+  "hideGenerationTimestamp": true,
+  "modelPackage": "com.MIDI.midi.model.test",
+  "apiPackage": "com.MIDI.midi",
+  "invokerPackage": "com.MIDI.midi",
+  "serializableModel": true,
+  "useTags": true,
+  "useGzipFeature" : true,
+  "hateoas": true,
+  "withXml": true,
+  "importMappings": {
+    "Link": "org.springframework.hateoas.Link"
+  }
+}
