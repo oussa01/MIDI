@@ -14,6 +14,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -45,20 +46,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public Optional<SignedInUser> createUser(User user) {
-        UserDocument userEntity = repository.save(toDocument(user));
+        String uname = user.getUsername();
+        System.out.println("username==="+ uname);
+        var userEntity = repository.save(toDocument(user));
         return Optional.of(createSignedUserWithRefreshToken(
                 userEntity));
     }
-
     private UserDocument toDocument(User user) {
         UserDocument userDocument = new UserDocument();
-        BeanUtils.copyProperties(user,userDocument);
+        BeanUtils.copyProperties(user, userDocument);
         userDocument.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         return userDocument;
     }
 
     @Override
+    @Transactional
     public SignedInUser getSignedInUser(UserDocument userEntity) {
         userTokenRepository.deleteByUserId(userEntity.getId());
         return createSignedUserWithRefreshToken(userEntity);
@@ -70,15 +74,11 @@ public class UserServiceImpl implements UserService {
                                 .username(userEntity.getUsername())
                                 .password(userEntity.getPassword())
                                 .build());
-      return SignedInUser.builder()
-              .username(userEntity.getUsername())
-              .accessToken(token)
-              .userId(userEntity.getId())
-              .build();
+      return new SignedInUser(userEntity.getUsername(),token,null,userEntity.getId());
     }
 
     private SignedInUser createSignedUserWithRefreshToken(UserDocument userDocument) {
-        return createSignedInUser(userDocument).builder().refreshToken(createRefreshToken(userDocument)).build();
+        return createSignedInUser(userDocument).refreshToken(createRefreshToken(userDocument));
     }
 
     private String createRefreshToken(UserDocument user) {
@@ -96,13 +96,12 @@ public class UserServiceImpl implements UserService {
         return userTokenRepository
                 .findByRefreshToken(refreshToken.getRefreshToken())
                 .map(ut ->
-                        Optional.of(createSignedInUser(ut.getUser()).builder().refreshToken(refreshToken.getRefreshToken()).build()
+                        Optional.of(createSignedInUser(ut.getUser()).refreshToken(refreshToken.getRefreshToken())
                                ))
                 .orElseThrow(() ->
                         new InvalidRefreshTokenException
                                 ("Invalid token."));
     }
-
 
 
     /*
@@ -112,6 +111,7 @@ the USER_TOKEN table. However, in that case, you should send a valid access toke
      */
     @Override
     public void removeRefreshToken(RefreshToken refreshToken) {
+        System.out.println("refresh =="+refreshToken.getRefreshToken());
         userTokenRepository
                 .findByRefreshToken(refreshToken.getRefreshToken())
                 .ifPresentOrElse(

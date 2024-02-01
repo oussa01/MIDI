@@ -1,17 +1,16 @@
 package com.MIDI.midi.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-
+@Builder
 public class User {
     private String id;
     private String firstname;
     private String lastname;
-    @JsonProperty("username")
     private String username;
     private String email;
-    @JsonProperty("password")
     private String password;
 }
